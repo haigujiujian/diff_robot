@@ -1,10 +1,13 @@
-    #include<stdint.h>
-    #include<stdio.h>
-    #include <ros/ros.h>											// 包含ROS的头文件
-    #include <ros/time.h>
-    #include <math.h>
-    #include <geometry_msgs/Twist.h>
-    #include"can_communication/motor_control.h"
+#include<stdint.h>
+#include<stdio.h>
+#include <ros/ros.h>											// 包含ROS的头文件
+#include <ros/time.h>
+#include <math.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Twist.h>
+#include"can_communication/motor_control.h"
     Motor_Control motor_Ctr;
 
 #define		PI			3.1415926535897932f
@@ -28,6 +31,14 @@ struct robotSpeed2{
  
 } right_Wheel;
 
+double x = 0.0;
+double y = 0.0;
+double th = 0.0;
+
+double vx = 0.0;
+double vy = 0.0;
+double vth = 0.0;
+
 union odometry													//里程计数据共用体
 {
 	float odoemtry_float;
@@ -38,6 +49,19 @@ void readData()
 {
   motor_Ctr.Motor_Feedback();
   ros::Time curr_time;
+  vx= (motor_Ctr.left_realtime_Speed+motor_Ctr.right_realtime_Speed)*PI/(2*r_to_m_Switch);
+  vth=(motor_Ctr.left_realtime_Speed-motor_Ctr.right_realtime_Speed)/(2*R);curr_time = ros::Time::now();
+
+  double dt = (curr_time - last_time).toSec();
+  double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
+  double delta_y = (vx * sin(th) + vy * cos(th)) * dt;
+  double delta_th = vth * dt;
+
+  x += delta_x;
+  y += delta_y;
+  th += delta_th;
+  last_time = curr_time;
+
 
 }
 
@@ -64,6 +88,7 @@ void writeSpeed(const geometry_msgs::Twist& msg)
   ROS_INFO("right_wheel_Speed:%d",right_Wheel.Speed);
   motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, left_Wheel.Speed, left_Wheel.Work_Mode,left_Wheel.Control_Word);
 	motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID, right_Wheel.Speed, right_Wheel.Work_Mode,right_Wheel.Control_Word);
+  readData();
 }
 
    int main(int argc, char** argv)
@@ -76,11 +101,37 @@ void writeSpeed(const geometry_msgs::Twist& msg)
 		       last_time = ros::Time::now();
 		       ros::Rate loop_rate(50);
 	      	 ros::NodeHandle nh;
+           ros::Publisher pub = nh.advertise<nav_msgs::Odometry>("odom", 50); 
+           tf::TransformBroadcaster odom_broadcaster;
+          
            ros::Subscriber sub = nh.subscribe("cmd_vel", 50, &writeSpeed);
-           ROS_INFO("ROS Node initialized successful.");
+         
+           geometry_msgs::TransformStamped odom_trans;
            motor_Ctr.Motor_PDO_Open();
+           ROS_INFO("ROS Node initialized successful.");
+        
+           nav_msgs::Odometry msgl;
+           geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);        /*角度转换成四元数坐标*/    
+           odom_trans.transform.translation.x = x;
+           odom_trans.transform.translation.y = y;
+           odom_trans.transform.translation.z = 0.0;
+           odom_trans.transform.rotation = odom_quat;
+           msgl.header.stamp = current_time;
+           msgl.header.frame_id = "odom";
+           /*设置位置*/
+           msgl.pose.pose.position.x = x;
+           msgl.pose.pose.position.y = y;
+           msgl.pose.pose.position.z = 0.0;
+           msgl.pose.pose.orientation = odom_quat;
+           /*设置方向*/
+           msgl.child_frame_id = "base_footprint";
+           msgl.twist.twist.linear.x = vx;
+           msgl.twist.twist.linear.y = vy;
+           msgl.twist.twist.angular.z = vth;
+
+           pub.publish(msgl);   
 		       ros::spin();
           
-         //motor_Ctr.Motor_Feedback();
+         
            return 0;
   }

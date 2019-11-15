@@ -7,8 +7,13 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
+  nav_msgs
   roscpp
+  rospy
+  sensor_msgs
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions

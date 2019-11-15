@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('mrobot_teleop')
+import roslib; 
 import rospy
 
 from geometry_msgs.msg import Twist
@@ -21,6 +21,7 @@ anything else : stop smoothly
 CTRL-C to quit
 """
 
+#roslib.load_manifest('mrobot_teleop')
 moveBindings = {
 		'i':(1,0),
 		'o':(1,-1),

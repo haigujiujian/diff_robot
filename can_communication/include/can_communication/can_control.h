@@ -13,7 +13,7 @@ public:
 	bool Can_Close();
 	bool Can_Initial();
 	bool Can_Read_Device_Info();
-	int Can_GetReceiveNum();
+	int  Can_GetReceiveNum();
 	bool Can_ClearBuffer();
 	bool Can_Start();
 	bool Can_Reset();
@@ -23,7 +23,7 @@ public:
 
 private:
 	
-        DWORD dwRel;
+    DWORD dwRel;
 	VCI_INIT_CONFIG vic;
 	VCI_BOARD_INFO vbi;
 	VCI_CAN_OBJ vco[1];
