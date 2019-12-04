@@ -10,12 +10,7 @@ unsigned char buffer[100];
 unsigned char checksum=0;
 unsigned char data_length=0;
 unsigned char dev_id;
-//回调函数 
-void write_callback(const unsigned char rev_data) 
-{ 
-    ROS_INFO_STREAM("Writing to serial port" ); 
-    ser.write(rev_data);   //发送串口数据 
-} 
+
 
 int Converter(const unsigned char a, const unsigned char b, const unsigned char c)
  {
@@ -40,22 +35,22 @@ int Converter(const unsigned char a, const unsigned char b, const unsigned char 
 
 
 
-int parase(unsigned char rev_data[],int len)
+int parase(unsigned char rev_data[])
 {
     double imu_message[9];
 
-    imu_message[0] = (double)Converter(rev_data[1], rev_data[2], rev_data[3]) / 100.0;
-    imu_message[1] = (double)Converter(rev_data[4], rev_data[5], rev_data[6]) / 100.0;
-    imu_message[2] = (double)Converter(rev_data[7], rev_data[8], rev_data[9]) / 100.0;
+    imu_message[0] = (double)Converter(rev_data[4], rev_data[5], rev_data[6]) / 100.0;
+    imu_message[1] = (double)Converter(rev_data[7], rev_data[8], rev_data[9]) / 100.0;
+    imu_message[2] = (double)Converter(rev_data[10], rev_data[11], rev_data[12]) / 100.0;
 
     // attention : computing acceleration should divide 1000
-    imu_message[3] = (double)Converter(rev_data[10], rev_data[11], rev_data[12]) / 100.0;
-    imu_message[4] = (double)Converter(rev_data[13], rev_data[14], rev_data[16]) / 100.0;
-    imu_message[5] = (double)Converter(rev_data[17], rev_data[18], rev_data[19]) / 100.0;
+    imu_message[3] = (double)Converter(rev_data[13], rev_data[14], rev_data[15]) / 100.0;
+    imu_message[4] = (double)Converter(rev_data[16], rev_data[17], rev_data[18]) / 100.0;
+    imu_message[5] = (double)Converter(rev_data[19], rev_data[20], rev_data[21]) / 100.0;
 
-    imu_message[6] = (double)Converter(rev_data[20], rev_data[21], rev_data[22]) / 100.0;
-    imu_message[7] = (double)Converter(rev_data[23], rev_data[24], rev_data[25]) / 100.0;
-    imu_message[8] = (double)Converter(rev_data[26], rev_data[27], rev_data[28]) / 100.0;
+    imu_message[6] = (double)Converter(rev_data[22], rev_data[23], rev_data[24]) / 100.0;
+    imu_message[7] = (double)Converter(rev_data[25], rev_data[26], rev_data[27]) / 100.0;
+    imu_message[8] = (double)Converter(rev_data[28], rev_data[29], rev_data[30]) / 100.0;
 
     
     imu_msg.header.frame_id = imu_frame_id;
@@ -101,10 +96,8 @@ int main (int argc, char** argv)
     //声明节点句柄 
     ros::NodeHandle nh; 
   
-    //订阅主题，并配置回调函数 
-    ros::Subscriber write_sub = nh.subscribe("write", 1000, write_callback); 
     //发布主题 
-    ros::Publisher read_pub = nh.advertise<std_msgs::String>("read", 1000); 
+    imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 100); 
   
     try 
     { 
@@ -134,51 +127,34 @@ int main (int argc, char** argv)
     ros::Rate loop_rate(50); 
     while(ros::ok()) 
     {   
-
-        if(ser.available()){ 
-            ROS_INFO_STREAM("Reading from serial port\n");
-            data = ser.read(ser.available()); 
-            if (count==0)
-            {
-                if(data==0x68)
+        ser.write(send_data,5);
+        usleep(15000);
+        if(ser.available())
+        { 
+                ROS_INFO_STREAM("Reading from serial port\n");
+                data_length = ser.read(buffer,32); 
+                if(data_length==32)
                 {
-                    count++;
-                }
-            }
-            else if(count==1)
-            {
-                data_length=data;
-                checksum=checksum+data;
-                count++;
-            }
-            else if(count==2)
-            {
-                dev_id=data;
-                count++;
-                checksum=checksum+data;
-            }
-            else if(count<data_length)
-            {
-                 buffer[count-3]=data;
-                 count++;
-                 checksum=checksum+data;
-            }
-            else if(count==data_length)
-            {
-                  if(checksum==data)
-                  {
-                      parase(buffer,data_length-3);
-                      read_pub.publish(imu_msg); 
-                  }
-                  count=0;
+                    for(int i=1;i<31;i++)
+                    {
+                        checksum=checksum+buffer[i];
+                    }
+                    if(checksum==buffer[31])
+                    {
+                        parase(buffer); 
+                        imu_pub.publish(imu_msg); 
+                        ROS_INFO_STREAM("Reading sucess\n");
 
-            }
+                    }
+                    checksum=0;
+                } 
+                     
+
+         }
             
-        } 
+     } 
 
         //处理ROS的信息，比如订阅消息,并调用回调函数 
         ros::spinOnce(); 
         loop_rate.sleep(); 
-  
-    } 
 } 

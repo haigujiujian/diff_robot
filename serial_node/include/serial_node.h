@@ -16,4 +16,5 @@
 
 std::string imu_frame_id;
 sensor_msgs::Imu imu_msg;
+ros::Publisher imu_pub;
 #endif
