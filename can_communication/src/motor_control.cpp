@@ -72,7 +72,7 @@ bool Motor_Control::Motor_Feedback()
 	if (CAN_com1.Can_ReceiveMessage())
 	{
 		std::cout << "I have receive data" << std::endl;
-		return TRUE;
+		
 		for(int i=0;i<4;i++)
 		{
 			if(CAN_com1.vci[i].ID==0x281)
@@ -83,6 +83,7 @@ bool Motor_Control::Motor_Feedback()
 				realtime_speed[0]=CAN_com1.vci[i].Data[3]; 
 				left_realtime_Speed=((ByteHex2Int(realtime_speed ,4))*1875)/(encoder_num*512);
 				std::cout<<left_realtime_Speed<<std::endl;
+				
 
 			}
 			else if(CAN_com1.vci[i].ID==0x282)
@@ -91,8 +92,14 @@ bool Motor_Control::Motor_Feedback()
 				realtime_speed[2]=CAN_com1.vci[i].Data[1];
 				realtime_speed[1]=CAN_com1.vci[i].Data[2];
 				realtime_speed[0]=CAN_com1.vci[i].Data[3]; 
-				right_realtime_Speed=((ByteHex2Int(realtime_speed,4))*1875)/(encoder_num*512);
+				right_realtime_Speed=-((ByteHex2Int(realtime_speed,4))*1875)/(encoder_num*512);
 				std::cout<<right_realtime_Speed<<std::endl;
+				
+			}
+			
+			if(i==4)
+			{
+				return TRUE;
 			}
 		}
 

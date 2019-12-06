@@ -50,7 +50,8 @@ void readData()
   motor_Ctr.Motor_Feedback();
   ros::Time curr_time;
   vx= (motor_Ctr.left_realtime_Speed+motor_Ctr.right_realtime_Speed)*PI/(2*r_to_m_Switch);
-  vth=(motor_Ctr.left_realtime_Speed-motor_Ctr.right_realtime_Speed)/(2*R);curr_time = ros::Time::now();
+  vth=(motor_Ctr.left_realtime_Speed-motor_Ctr.right_realtime_Speed)/(2*R);
+  curr_time = ros::Time::now();
 
   double dt = (curr_time - last_time).toSec();
   double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
@@ -61,7 +62,7 @@ void readData()
   y += delta_y;
   th += delta_th;
   last_time = curr_time;
-
+  ROS_INFO("%f,%f",vx,vth) ;
 
 }
 
