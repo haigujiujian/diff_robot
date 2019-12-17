@@ -9,7 +9,7 @@ class Teleop
  public:  
     Teleop();  
     double v1 = 0.2,w1 =0.2 ;
-    double vmax=1,vmin=0.1,ang_max=0.5,ang_min=0.1;
+    double vmax=0.5,vmin=0.1,ang_max=0.6,ang_min=0.1;
   
 //private:  
     /* data */  

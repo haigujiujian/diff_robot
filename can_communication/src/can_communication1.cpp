@@ -62,7 +62,7 @@ void readData()
   y += delta_y;
   th += delta_th;
   last_time = curr_time;
-  ROS_INFO("%f,%f",vx,vth) ;
+  ROS_INFO("x:%d,y:%d",motor_Ctr.left_realtime_Speed,motor_Ctr.left_realtime_Speed) ;
 
 }
 
@@ -89,7 +89,7 @@ void writeSpeed(const geometry_msgs::Twist& msg)
   ROS_INFO("right_wheel_Speed:%d",right_Wheel.Speed);
   motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, left_Wheel.Speed, left_Wheel.Work_Mode,left_Wheel.Control_Word);
 	motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID, right_Wheel.Speed, right_Wheel.Work_Mode,right_Wheel.Control_Word);
-  readData();
+  
 }
 
    int main(int argc, char** argv)
@@ -109,29 +109,36 @@ void writeSpeed(const geometry_msgs::Twist& msg)
          
            geometry_msgs::TransformStamped odom_trans;
            motor_Ctr.Motor_PDO_Open();
+           motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, left_Wheel.Speed, left_Wheel.Work_Mode,left_Wheel.Control_Word);
+        	 motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID, right_Wheel.Speed, right_Wheel.Work_Mode,right_Wheel.Control_Word);
            ROS_INFO("ROS Node initialized successful.");
-        
+          
            nav_msgs::Odometry msgl;
-           geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);        /*角度转换成四元数坐标*/    
-           odom_trans.transform.translation.x = x;
-           odom_trans.transform.translation.y = y;
-           odom_trans.transform.translation.z = 0.0;
-           odom_trans.transform.rotation = odom_quat;
-           msgl.header.stamp = current_time;
-           msgl.header.frame_id = "odom";
-           /*设置位置*/
-           msgl.pose.pose.position.x = x;
-           msgl.pose.pose.position.y = y;
-           msgl.pose.pose.position.z = 0.0;
-           msgl.pose.pose.orientation = odom_quat;
-           /*设置方向*/
-           msgl.child_frame_id = "base_footprint";
-           msgl.twist.twist.linear.x = vx;
-           msgl.twist.twist.linear.y = vy;
-           msgl.twist.twist.angular.z = vth;
+           while(ros::ok())
+           {
+                ros::spinOnce();
 
-           pub.publish(msgl);   
-		       ros::spin();
+                readData();
+                geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);        /*角度转换成四元数坐标*/    
+                odom_trans.transform.translation.x = x;
+                odom_trans.transform.translation.y = y;
+                odom_trans.transform.translation.z = 0.0;
+                odom_trans.transform.rotation = odom_quat;
+                msgl.header.stamp = current_time;
+                msgl.header.frame_id = "odom";
+                /*设置位置*/
+                msgl.pose.pose.position.x = x;
+                msgl.pose.pose.position.y = y;
+                msgl.pose.pose.position.z = 0.0;
+                msgl.pose.pose.orientation = odom_quat;
+                /*设置方向*/
+                msgl.child_frame_id = "base_link";
+                msgl.twist.twist.linear.x = vx;
+                msgl.twist.twist.linear.y = vy;
+                msgl.twist.twist.angular.z = vth;
+   
+                pub.publish(msgl);   
+           }
           
          
            return 0;

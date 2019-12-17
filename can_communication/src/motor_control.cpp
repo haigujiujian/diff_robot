@@ -1,9 +1,10 @@
+#include<stdio.h>
 #include<iostream>
 #include"can_communication/motor_control.h"
 #include"can_communication/can_control.h"
 
   CANcommunication CAN_com1;
-
+  BYTE Control_Word_Stop[2]={0x06,0x00} ;
 
 Motor_Control::Motor_Control()
 {
@@ -12,10 +13,15 @@ Motor_Control::Motor_Control()
 	CAN_com1.Can_Start();
 	PDO_Open[0] = 0x01;
 	PDO_Open[1] = 0x00;
+	
 }
 
 Motor_Control::~Motor_Control()
 {
+	this->Motor_Speed_Control(0x201, 0, 0x03,Control_Word_Stop);
+	this->Motor_Speed_Control(0x202, 0, 0x03,Control_Word_Stop);
+	this->Motor_Speed_Control(0x202, 0, 0x03,Control_Word_Stop);
+	this->Motor_Speed_Control(0x202, 0, 0x03,Control_Word_Stop);
 	CAN_com1.Can_Close();
 }
 
