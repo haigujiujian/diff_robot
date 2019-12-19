@@ -14,6 +14,7 @@ Motor_Control::Motor_Control()
 	PDO_Open[0] = 0x01;
 	PDO_Open[1] = 0x00;
 	
+	
 }
 
 Motor_Control::~Motor_Control()
@@ -47,9 +48,7 @@ void Motor_Control::Motor_Speed_Control(INT16 Motor_RPDO_ID, int Motor_Speed,BYT
 	BYTE Send_Message[7];
 	BYTE Speed_Message[4];
 	double speed;
-	speed =   (512*Motor_Speed) ;
-	speed = (speed*encoder_num)/1875;
-	speed = int(speed);
+	speed =   (512.0*Motor_Speed*encoder_num)/1875.0 ;
 	Dec2HexVector(Speed_Message, speed, 4);
 	Send_Message[0] = CONTROL_Word[0];
 	Send_Message[1] = CONTROL_Word[1];
@@ -72,34 +71,44 @@ void Motor_Control::Motor_Speed_Control(INT16 Motor_RPDO_ID, int Motor_Speed,BYT
 bool Motor_Control::Motor_Feedback()
 {
 	BYTE data[2];
-	BYTE realtime_speed[4];
+
 	
 	CAN_com1.Can_SendMessage(0x80, 0, data);
 	if (CAN_com1.Can_ReceiveMessage())
 	{
-		std::cout << "I have receive data" << std::endl;
+		//std::cout << "I have receive data" << std::endl;
+	
 		
 		for(int i=0;i<4;i++)
 		{
-			if(CAN_com1.vci[i].ID==0x281)
+			if(CAN_com1.vci[i].ID==0x282)
 			{
-                realtime_speed[3]=CAN_com1.vci[i].Data[0];
-				realtime_speed[2]=CAN_com1.vci[i].Data[1];
-				realtime_speed[1]=CAN_com1.vci[i].Data[2];
-				realtime_speed[0]=CAN_com1.vci[i].Data[3]; 
-				left_realtime_Speed=((ByteHex2Int(realtime_speed ,4))*1875)/(encoder_num*512);
-				std::cout<<left_realtime_Speed<<std::endl;
+				speed_change.real_time_speed[0]=CAN_com1.vci[i].Data[0];
+				speed_change.real_time_speed[1]=CAN_com1.vci[i].Data[1];
+                speed_change.real_time_speed[2]=CAN_com1.vci[i].Data[2];
+				speed_change.real_time_speed[3]=CAN_com1.vci[i].Data[3];
+
+				/*for(i=0;i<4;i++)
+				{
+					std::cout<<std::to_string(speed_change.real_time_speed[i])<<std::endl;
+				}*/
+				left_realtime_Speed=-((speed_change.real_speed*1875.0)/(encoder_num*512.0));				
+				std::cout<<"left_real_speed:"<<std::to_string(left_realtime_Speed)<<std::endl;
 				
 
 			}
-			else if(CAN_com1.vci[i].ID==0x282)
+			else if(CAN_com1.vci[i].ID==0x281)
 			{
-                realtime_speed[3]=CAN_com1.vci[i].Data[0];
-				realtime_speed[2]=CAN_com1.vci[i].Data[1];
-				realtime_speed[1]=CAN_com1.vci[i].Data[2];
-				realtime_speed[0]=CAN_com1.vci[i].Data[3]; 
-				right_realtime_Speed=-((ByteHex2Int(realtime_speed,4))*1875)/(encoder_num*512);
-				std::cout<<right_realtime_Speed<<std::endl;
+                speed_change.real_time_speed[0]=CAN_com1.vci[i].Data[0];
+				speed_change.real_time_speed[1]=CAN_com1.vci[i].Data[1];
+                speed_change.real_time_speed[2]=CAN_com1.vci[i].Data[2];
+				speed_change.real_time_speed[3]=CAN_com1.vci[i].Data[3];
+				/*for(i=0;i<4;i++)
+				{
+					std::cout<<std::to_string(speed_change.real_time_speed[i])<<std::endl;
+				}*/
+				right_realtime_Speed=(speed_change.real_speed*1875.0)/(encoder_num*512.0);
+				std::cout<<"right_real_speed:"<<std::to_string(right_realtime_Speed)<<std::endl;
 				
 			}
 			
@@ -113,7 +122,7 @@ bool Motor_Control::Motor_Feedback()
 	else
 	{
 		std::cout<<CAN_com1.vci[0].ID <<std::endl;
-		std::cout << "I don't receive data" << std::endl;
+		//std::cout << "I don't receive data" << std::endl;
 		return FALSE;
 	}
 
@@ -127,7 +136,7 @@ void Motor_Control::Dec2HexVector(BYTE *data_vec, const int &dec_value, const in
 	}
 }
 
-int Motor_Control::ByteHex2Int(BYTE *data_vec, const int &data_vec_len)
+/*int Motor_Control::ByteHex2Int(BYTE *data_vec, const int &data_vec_len)
 {
 	int result = 0;
 	int sign_judger = 0x80;
@@ -135,10 +144,12 @@ int Motor_Control::ByteHex2Int(BYTE *data_vec, const int &data_vec_len)
 	for ( int i = 0; i < data_vec_len; i++)
 	{
 		result += (data_vec[i] << (i * 8));
+		
 	}
 	if (sign_judger&&result)
 	{
 		result = -1 * (~(result - 1));
 	}
 	return result;
-}
+}*/
+

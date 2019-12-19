@@ -131,7 +131,7 @@ int main (int argc, char** argv)
         usleep(15000);
         if(ser.available())
         { 
-                ROS_INFO_STREAM("Reading from serial port\n");
+                //ROS_INFO_STREAM("Reading from serial port\n");
                 data_length = ser.read(buffer,32); 
                 if(data_length==32)
                 {
@@ -143,7 +143,7 @@ int main (int argc, char** argv)
                     {
                         parase(buffer); 
                         imu_pub.publish(imu_msg); 
-                        ROS_INFO_STREAM("Reading sucess\n");
+                        //ROS_INFO_STREAM("Reading sucess\n");
 
                     }
                     checksum=0;

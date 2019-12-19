@@ -14,7 +14,7 @@
 
 #define GRAVITY 9.80665
 
-std::string imu_frame_id;
+std::string imu_frame_id = "imu_link";
 sensor_msgs::Imu imu_msg;
 ros::Publisher imu_pub;
 #endif

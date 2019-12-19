@@ -152,7 +152,7 @@ bool CANcommunication::Can_SendMessage(UINT SendID,UINT Data_length,BYTE SendMes
 	}
 	else
 	{
-		std::cout << "sendmessage sucess" << std::endl;
+		//std::cout << "sendmessage sucess" << std::endl;
 		return TRUE;
 
 	}
@@ -164,7 +164,7 @@ bool CANcommunication::Can_ReceiveMessage()
 	dwRel = VCI_Receive(nDeviceType, nDeviceInd, nCANInd, vci, 2500, 0);
 	if (dwRel > 0)
 	{
-		std::cout << "receive data sucess" << std::endl;
+		//std::cout << "receive data sucess" << std::endl;
 		return TRUE;
 	}
 	else

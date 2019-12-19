@@ -12,10 +12,10 @@
 
 #define		PI			3.1415926535897932f
 #define   R       0.25
-#define   r_to_m_Switch  9000
+#define   r_to_m_Switch  9000.0
 ros::Time current_time, last_time;
 struct robotSpeed1{
-  INT16 Motor_ID=0x201;  
+  INT16 Motor_ID=0x202;  
   BYTE Control_Word[2]={0x0f,0x00} ;
   BYTE Work_Mode=0x03;
   int Speed;
@@ -24,7 +24,7 @@ struct robotSpeed1{
 
 
 struct robotSpeed2{
-  INT16 Motor_ID=0x202;  
+  INT16 Motor_ID=0x201;  
   BYTE Control_Word[2]={0x0f,0x00} ;
   BYTE Work_Mode=0x03;
   int Speed;
@@ -50,7 +50,7 @@ void readData()
   motor_Ctr.Motor_Feedback();
   ros::Time curr_time;
   vx= (motor_Ctr.left_realtime_Speed+motor_Ctr.right_realtime_Speed)*PI/(2*r_to_m_Switch);
-  vth=(motor_Ctr.left_realtime_Speed-motor_Ctr.right_realtime_Speed)/(2*R);
+  vth=((motor_Ctr.left_realtime_Speed-motor_Ctr.right_realtime_Speed)/r_to_m_Switch)/(2*R);
   curr_time = ros::Time::now();
 
   double dt = (curr_time - last_time).toSec();
@@ -62,8 +62,8 @@ void readData()
   y += delta_y;
   th += delta_th;
   last_time = curr_time;
-  ROS_INFO("x:%d,y:%d",motor_Ctr.left_realtime_Speed,motor_Ctr.left_realtime_Speed) ;
-
+  ROS_INFO("vx:%f,vth:%f",vx,vth) ;
+  ROS_INFO("x:%f,y:%f",x,y) ;
 }
 
 void writeSpeed(const geometry_msgs::Twist& msg)
@@ -77,13 +77,13 @@ void writeSpeed(const geometry_msgs::Twist& msg)
 		right_Wheel.Speed = (YawRate * R*r_to_m_Switch)/PI;
 	} else if(YawRate == 0)
 	{
-		left_Wheel.Speed = RobotV;
-		right_Wheel.Speed =-RobotV;
+		left_Wheel.Speed =-RobotV;
+		right_Wheel.Speed =RobotV;
 	}
 	else
 	{
-		right_Wheel.Speed = -(YawRate * (r - R)*r_to_m_Switch)/PI;
-		left_Wheel.Speed =(YawRate * (r + R)*r_to_m_Switch)/PI;
+		right_Wheel.Speed = (YawRate * (r - R)*r_to_m_Switch)/PI;
+		left_Wheel.Speed =-(YawRate * (r + R)*r_to_m_Switch)/PI;
 	}
   ROS_INFO("left_wheel_Speed:%d",left_Wheel.Speed);
   ROS_INFO("right_wheel_Speed:%d",right_Wheel.Speed);
@@ -109,21 +109,31 @@ void writeSpeed(const geometry_msgs::Twist& msg)
          
            geometry_msgs::TransformStamped odom_trans;
            motor_Ctr.Motor_PDO_Open();
-           motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, left_Wheel.Speed, left_Wheel.Work_Mode,left_Wheel.Control_Word);
-        	 motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID, right_Wheel.Speed, right_Wheel.Work_Mode,right_Wheel.Control_Word);
+           motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, 0, left_Wheel.Work_Mode,left_Wheel.Control_Word);
+        	 motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID,0, right_Wheel.Work_Mode,right_Wheel.Control_Word);
            ROS_INFO("ROS Node initialized successful.");
-          
+           usleep(15000);
            nav_msgs::Odometry msgl;
            while(ros::ok())
            {
                 ros::spinOnce();
-
                 readData();
+                current_time = ros::Time::now();
+                odom_trans.header.stamp = current_time;
+                odom_trans.header.frame_id = "odom";
+                odom_trans.child_frame_id = "base_link";
                 geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);        /*角度转换成四元数坐标*/    
                 odom_trans.transform.translation.x = x;
                 odom_trans.transform.translation.y = y;
                 odom_trans.transform.translation.z = 0.0;
                 odom_trans.transform.rotation = odom_quat;
+                       
+
+
+               //send the transform
+                odom_broadcaster.sendTransform(odom_trans);
+
+
                 msgl.header.stamp = current_time;
                 msgl.header.frame_id = "odom";
                 /*设置位置*/

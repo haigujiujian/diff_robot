@@ -37,7 +37,7 @@ Teleop::Teleop()
     n.param<int>("button",ton3,3);
     pub = n.advertise<geometry_msgs::Twist>("cmd_vel",1);//将速度发给乌龟
     sub = n.subscribe<sensor_msgs::Joy>("joy",10,&Teleop::callback,this); //订阅游戏手柄发来的数据
-    ROS_INFO("%f,%f",vlinear,vangular);
+    //ROS_INFO("%f,%f",vlinear,vangular);
 }
 void Teleop::callback(const sensor_msgs::Joy::ConstPtr& Joy)  
 {   
@@ -78,7 +78,7 @@ void Teleop::callback(const sensor_msgs::Joy::ConstPtr& Joy)
      v.angular.z =Joy->axes[axis_ang]*vangular;  
 
      ROS_INFO("linear:%.3lf angular:%.3lf",v.linear.x,v.angular.z);   
-     ROS_INFO("v_scale:%f ang_scale:%f",vlinear,vangular);
+     //ROS_INFO("v_scale:%f ang_scale:%f",vlinear,vangular);
      pub.publish(v);  
     }
 }  
