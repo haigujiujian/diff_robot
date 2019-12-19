@@ -76,6 +76,10 @@ void Teleop::callback(const sensor_msgs::Joy::ConstPtr& Joy)
      }
      v.linear.x =Joy->axes[axis_lin]*vlinear; //将游戏手柄的数据乘以你想要的速度，然后发给小车
      v.angular.z =Joy->axes[axis_ang]*vangular;  
+     if(v.linear.x<0)
+     {
+         v.angular.z=-v.angular.z;
+     }
 
      ROS_INFO("linear:%.3lf angular:%.3lf",v.linear.x,v.angular.z);   
      //ROS_INFO("v_scale:%f ang_scale:%f",vlinear,vangular);

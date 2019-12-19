@@ -82,8 +82,8 @@ void writeSpeed(const geometry_msgs::Twist& msg)
 	}
 	else
 	{
-		right_Wheel.Speed = (YawRate * (r - R)*r_to_m_Switch)/PI;
-		left_Wheel.Speed =-(YawRate * (r + R)*r_to_m_Switch)/PI;
+		right_Wheel.Speed =(YawRate * (r + R)*r_to_m_Switch)/PI;
+		left_Wheel.Speed = -(YawRate * (r - R)*r_to_m_Switch)/PI;
 	}
   ROS_INFO("left_wheel_Speed:%d",left_Wheel.Speed);
   ROS_INFO("right_wheel_Speed:%d",right_Wheel.Speed);
