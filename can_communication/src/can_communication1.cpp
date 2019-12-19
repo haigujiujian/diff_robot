@@ -50,7 +50,7 @@ void readData()
   motor_Ctr.Motor_Feedback();
   ros::Time curr_time;
   vx= (motor_Ctr.left_realtime_Speed+motor_Ctr.right_realtime_Speed)*PI/(2*r_to_m_Switch);
-  vth=((motor_Ctr.left_realtime_Speed-motor_Ctr.right_realtime_Speed)/r_to_m_Switch)/(2*R);
+  vth=((motor_Ctr.right_realtime_Speed-motor_Ctr.left_realtime_Speed)*PI/r_to_m_Switch)/(2*R);
   curr_time = ros::Time::now();
 
   double dt = (curr_time - last_time).toSec();
@@ -100,7 +100,7 @@ void writeSpeed(const geometry_msgs::Twist& msg)
 	         ros::Time::init();
 		       current_time = ros::Time::now();
 		       last_time = ros::Time::now();
-		       ros::Rate loop_rate(50);
+		       ros::Rate loop_rate(20);
 	      	 ros::NodeHandle nh;
            ros::Publisher pub = nh.advertise<nav_msgs::Odometry>("odom", 50); 
            tf::TransformBroadcaster odom_broadcaster;
@@ -112,11 +112,10 @@ void writeSpeed(const geometry_msgs::Twist& msg)
            motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, 0, left_Wheel.Work_Mode,left_Wheel.Control_Word);
         	 motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID,0, right_Wheel.Work_Mode,right_Wheel.Control_Word);
            ROS_INFO("ROS Node initialized successful.");
-           usleep(15000);
            nav_msgs::Odometry msgl;
            while(ros::ok())
            {
-                ros::spinOnce();
+                
                 readData();
                 current_time = ros::Time::now();
                 odom_trans.header.stamp = current_time;
@@ -148,6 +147,8 @@ void writeSpeed(const geometry_msgs::Twist& msg)
                 msgl.twist.twist.angular.z = vth;
    
                 pub.publish(msgl);   
+                ros::spinOnce();
+                loop_rate.sleep();
            }
           
          

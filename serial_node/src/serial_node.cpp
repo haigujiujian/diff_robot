@@ -44,9 +44,9 @@ int parase(unsigned char rev_data[])
     imu_message[2] = (double)Converter(rev_data[10], rev_data[11], rev_data[12]) / 100.0;
 
     // attention : computing acceleration should divide 1000
-    imu_message[3] = (double)Converter(rev_data[13], rev_data[14], rev_data[15]) / 100.0;
-    imu_message[4] = (double)Converter(rev_data[16], rev_data[17], rev_data[18]) / 100.0;
-    imu_message[5] = (double)Converter(rev_data[19], rev_data[20], rev_data[21]) / 100.0;
+    imu_message[3] = (double)Converter(rev_data[13], rev_data[14], rev_data[15]) / 1000.0;
+    imu_message[4] = (double)Converter(rev_data[16], rev_data[17], rev_data[18]) / 1000.0;
+    imu_message[5] = (double)Converter(rev_data[19], rev_data[20], rev_data[21]) / 1000.0;
 
     imu_message[6] = (double)Converter(rev_data[22], rev_data[23], rev_data[24]) / 100.0;
     imu_message[7] = (double)Converter(rev_data[25], rev_data[26], rev_data[27]) / 100.0;
@@ -124,7 +124,7 @@ int main (int argc, char** argv)
         return -1; 
     } 
     //指定循环的频率 
-    ros::Rate loop_rate(50); 
+    ros::Rate loop_rate(20); 
     while(ros::ok()) 
     {   
         ser.write(send_data,5);
