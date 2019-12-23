@@ -3,6 +3,7 @@
 #include <ros/ros.h>											// 包含ROS的头文件
 #include <ros/time.h>
 #include <math.h>
+#include <array>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
@@ -14,6 +15,23 @@
 #define   R       0.25
 #define   r_to_m_Switch  9000.0
 ros::Time current_time, last_time;
+
+boost::array<double, 36> odom_pose_covariance = {
+    {1e-9, 0, 0, 0, 0, 0,
+    0, 1e-3, 1e-9, 0, 0, 0,
+    0, 0, 1e6, 0, 0, 0,
+    0, 0, 0, 1e6, 0, 0,
+    0, 0, 0, 0, 1e6, 0,
+    0, 0, 0, 0, 0, 1e-9}};
+boost::array<double, 36> odom_twist_covariance = {
+    {1e-9, 0, 0, 0, 0, 0,
+    0, 1e-3, 1e-9, 0, 0, 0,
+    0, 0, 1e6, 0, 0, 0,
+    0, 0, 0, 1e6, 0, 0,
+    0, 0, 0, 0, 1e6, 0,
+    0, 0, 0, 0, 0, 1e-9}};
+
+
 struct robotSpeed1{
   INT16 Motor_ID=0x202;  
   BYTE Control_Word[2]={0x0f,0x00} ;
@@ -140,11 +158,13 @@ void writeSpeed(const geometry_msgs::Twist& msg)
                 msgl.pose.pose.position.y = y;
                 msgl.pose.pose.position.z = 0.0;
                 msgl.pose.pose.orientation = odom_quat;
+                msgl.pose.covariance=odom_pose_covariance;
                 /*设置方向*/
                 msgl.child_frame_id = "base_link";
                 msgl.twist.twist.linear.x = vx;
                 msgl.twist.twist.linear.y = vy;
                 msgl.twist.twist.angular.z = vth;
+                msgl.twist.covariance=odom_twist_covariance;
    
                 pub.publish(msgl);   
                 ros::spinOnce();
