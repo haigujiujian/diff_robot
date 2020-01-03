@@ -49,6 +49,20 @@ struct robotSpeed2{
  
 } right_Wheel;
 
+struct robotSpeed3{
+  INT16 Motor_ID=0x203;  
+  BYTE Control_Word1[2]={0x1f,0x00} ;
+  BYTE Control_Word2[3]={0x2f,0x00} ;
+  BYTE Work_Mode=0x01;
+  unsigned int absolute_position;
+  int Speed;
+ 
+} up_down_motor;
+
+
+
+
+
 double x = 0.0;
 double y = 0.0;
 double th = 0.0;
