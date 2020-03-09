@@ -1,4 +1,0 @@
-<launch>
-  <node pkg="can_communication" type="can_communication1" name="can_communication1" output="screen">
-  </node>
-</launch>

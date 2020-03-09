@@ -5,16 +5,19 @@
 
   CANcommunication CAN_com1;
   BYTE Control_Word_Stop[2]={0x06,0x00} ;
+  union Control_value
+  {
+	  BYTE modify_value[4];
+	  int exchange_value;
+  };
 
 Motor_Control::Motor_Control()
 {
-	CAN_com1.Can_Open();
+    CAN_com1.Can_Open();
 	CAN_com1.Can_Initial();
 	CAN_com1.Can_Start();
 	PDO_Open[0] = 0x01;
 	PDO_Open[1] = 0x00;
-	
-	
 }
 
 Motor_Control::~Motor_Control()
@@ -67,13 +70,52 @@ void Motor_Control::Motor_Speed_Control(INT16 Motor_RPDO_ID, int Motor_Speed,BYT
 	}
 }
 
+void Motor_Control::Motor_Mode_Control(INT16 Motor_RPDO_ID,BYTE WorkMode,BYTE CONTROL_Word[2])
+{
+	BYTE Send_Message[3];
+	Send_Message[0]=WorkMode;
+	Send_Message[1]=CONTROL_Word[0];
+	Send_Message[2]=CONTROL_Word[1];
+	if (CAN_com1.Can_SendMessage(Motor_RPDO_ID, 3, Send_Message) == TRUE)
+	{
+		std::cout << "mode control send sucess" << std::endl;
+	}
+	else
+	{
+		std::cout << "mode control send failure" << std::endl;
+	}
+}
+void Motor_Control::Motor_Lift_Control(INT16 Motor_RPDO_ID,int Target_Position,int Lift_Trapezoid_Speed )
+{
+    BYTE Send_Message[8];
+	union Control_value position ,speed;
+	position.exchange_value=Target_Position;
+	speed.exchange_value=(512.0*Lift_Trapezoid_Speed*encoder_num)/1875.0;
+    Send_Message[0]=position.modify_value[0];
+	Send_Message[1]=position.modify_value[1];
+	Send_Message[2]=position.modify_value[2];
+	Send_Message[3]=position.modify_value[3];
+	Send_Message[4]=speed.modify_value[0];
+	Send_Message[5]=speed.modify_value[1];
+	Send_Message[6]=speed.modify_value[2];
+	Send_Message[7]=speed.modify_value[3];
+	if (CAN_com1.Can_SendMessage(Motor_RPDO_ID, 8, Send_Message) == TRUE)
+	{
+		std::cout << "lift control send sucess" << std::endl;
+	}
+	else
+	{
+		std::cout << "lift control send failure" << std::endl;
+	}
+
+}
+
+
 
 bool Motor_Control::Motor_Feedback()
 {
 	BYTE data[2];
-
-	
-	CAN_com1.Can_SendMessage(0x80, 0, data);
+    CAN_com1.Can_SendMessage(0x80, 0, data);
 	if (CAN_com1.Can_ReceiveMessage())
 	{
 		//std::cout << "I have receive data" << std::endl;
@@ -92,7 +134,11 @@ bool Motor_Control::Motor_Feedback()
 				{
 					std::cout<<std::to_string(speed_change.real_time_speed[i])<<std::endl;
 				}*/
-				left_realtime_Speed=-((speed_change.real_speed*1875.0)/(encoder_num*512.0));				
+				left_realtime_Speed=-((speed_change.real_speed*1875.0)/(encoder_num*512.0));
+				if(left_realtime_Speed<5&left_realtime_Speed>-5)
+				{
+					left_realtime_Speed=0;
+				}				
 				std::cout<<"left_real_speed:"<<std::to_string(left_realtime_Speed)<<std::endl;
 				
 
@@ -108,6 +154,10 @@ bool Motor_Control::Motor_Feedback()
 					std::cout<<std::to_string(speed_change.real_time_speed[i])<<std::endl;
 				}*/
 				right_realtime_Speed=(speed_change.real_speed*1875.0)/(encoder_num*512.0);
+				if(right_realtime_Speed<5&right_realtime_Speed>-5)
+				{
+					right_realtime_Speed=0;
+				}
 				std::cout<<"right_real_speed:"<<std::to_string(right_realtime_Speed)<<std::endl;
 				
 			}

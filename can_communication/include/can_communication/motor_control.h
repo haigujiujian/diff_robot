@@ -22,8 +22,11 @@ public:
 public:
 	bool Motor_PDO_Open();
 	void Motor_Speed_Control(INT16 MotorID, int Motor_Speed, BYTE WorkMode, BYTE CONTROL_Word[2]);
+	void Motor_Mode_Control(INT16 Motor_RPDO_ID,BYTE WorkMode,BYTE CONTROL_Word[2]);
+	void Motor_Lift_Control(INT16 Motor_RPDO_ID,int Target_Position,int Lift_Trapezoid_Speed);
 	bool Motor_Feedback();
 	void Dec2HexVector(BYTE *data_vec, const int &dec_value, const int &len);
+
 	//int ByteHex2Int(BYTE *data_vec, const int &data_vec_len);
 	double left_realtime_Speed;
     double right_realtime_Speed;

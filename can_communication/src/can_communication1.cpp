@@ -8,12 +8,16 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
+#include <js_turtle/lift_control_msg.h> 
 #include"can_communication/motor_control.h"
     Motor_Control motor_Ctr;
 
 #define		PI			3.1415926535897932f
 #define   R       0.25
 #define   r_to_m_Switch  9000.0
+#define   extreme_low  1038500000.0
+#define   extreme_high 1100000000.0
+#define   length       0.465
 ros::Time current_time, last_time;
 
 boost::array<double, 36> odom_pose_covariance = {
@@ -50,11 +54,12 @@ struct robotSpeed2{
 } right_Wheel;
 
 struct robotSpeed3{
-  INT16 Motor_ID=0x203;  
+  INT16 Motor_ID1=0x203;
+  INT16 Motor_ID2=0x303;  
   BYTE Control_Word1[2]={0x1f,0x00} ;
-  BYTE Control_Word2[3]={0x2f,0x00} ;
+  BYTE Control_Word2[2]={0x2f,0x00} ;
   BYTE Work_Mode=0x01;
-  unsigned int absolute_position;
+  int target_position;
   int Speed;
  
 } up_down_motor;
@@ -94,8 +99,8 @@ void readData()
   y += delta_y;
   th += delta_th;
   last_time = curr_time;
-  ROS_INFO("vx:%f,vth:%f",vx,vth) ;
-  ROS_INFO("x:%f,y:%f",x,y) ;
+  //ROS_INFO("vx:%f,vth:%f",vx,vth) ;
+  //ROS_INFO("x:%f,y:%f",x,y) ;
 }
 
 void writeSpeed(const geometry_msgs::Twist& msg)
@@ -117,37 +122,55 @@ void writeSpeed(const geometry_msgs::Twist& msg)
 		right_Wheel.Speed =(YawRate * (r + R)*r_to_m_Switch)/PI;
 		left_Wheel.Speed = -(YawRate * (r - R)*r_to_m_Switch)/PI;
 	}
-  ROS_INFO("left_wheel_Speed:%d",left_Wheel.Speed);
-  ROS_INFO("right_wheel_Speed:%d",right_Wheel.Speed);
+  //ROS_INFO("left_wheel_Speed:%d",left_Wheel.Speed);
+  //ROS_INFO("right_wheel_Speed:%d",right_Wheel.Speed);
   motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, left_Wheel.Speed, left_Wheel.Work_Mode,left_Wheel.Control_Word);
 	motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID, right_Wheel.Speed, right_Wheel.Work_Mode,right_Wheel.Control_Word);
   
 }
 
+
+void write_lift_Speed(const js_turtle::lift_control_msg& msg)
+{
+   up_down_motor.Speed=msg.speed*120000.0;
+   up_down_motor.target_position=extreme_high-((msg.level/length)*(extreme_high-extreme_low-1));
+   motor_Ctr.Motor_Lift_Control(up_down_motor.Motor_ID2,up_down_motor.target_position,up_down_motor.Speed);
+   motor_Ctr.Motor_Mode_Control(up_down_motor.Motor_ID1,up_down_motor.Work_Mode,up_down_motor.Control_Word2);
+   motor_Ctr.Motor_Mode_Control(up_down_motor.Motor_ID1,up_down_motor.Work_Mode,up_down_motor.Control_Word1);
+   ROS_INFO("lift_speed:%d",up_down_motor.Speed);
+   ROS_INFO("lift_level:%d",up_down_motor.target_position);
+    
+}
+
    int main(int argc, char** argv)
   {
-       
-     
+           
            ros::init(argc, argv, "can_communication1");									//初始化节点
-	         ros::Time::init();
-		       current_time = ros::Time::now();
-		       last_time = ros::Time::now();
-		       ros::Rate loop_rate(20);
-	      	 ros::NodeHandle nh;
+	       ros::Time::init();
+		   current_time = ros::Time::now();
+		   last_time = ros::Time::now();
+		   ros::Rate loop_rate(20);
+	       ros::NodeHandle nh;
+           ros::NodeHandle privatenh("test_ns");
+         
+         
+
            ros::Publisher pub = nh.advertise<nav_msgs::Odometry>("odom", 50); 
            tf::TransformBroadcaster odom_broadcaster;
           
-           ros::Subscriber sub = nh.subscribe("cmd_vel", 50, &writeSpeed);
-         
+           ros::Subscriber sub1 = nh.subscribe("cmd_vel", 50, &writeSpeed);
+           ros::Subscriber sub2 = nh.subscribe("lift_msg", 50,&write_lift_Speed);
+           
            geometry_msgs::TransformStamped odom_trans;
            motor_Ctr.Motor_PDO_Open();
            motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, 0, left_Wheel.Work_Mode,left_Wheel.Control_Word);
         	 motor_Ctr.Motor_Speed_Control(right_Wheel.Motor_ID,0, right_Wheel.Work_Mode,right_Wheel.Control_Word);
            ROS_INFO("ROS Node initialized successful.");
            nav_msgs::Odometry msgl;
+
+           
            while(ros::ok())
            {
-                
                 readData();
                 current_time = ros::Time::now();
                 odom_trans.header.stamp = current_time;
@@ -159,7 +182,7 @@ void writeSpeed(const geometry_msgs::Twist& msg)
                 odom_trans.transform.translation.z = 0.0;
                 odom_trans.transform.rotation = odom_quat;
                        
-
+   
 
                //send the transform
                 odom_broadcaster.sendTransform(odom_trans);

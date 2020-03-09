@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="robot_master" type="master_control" name="master_control" output="screen"/>
+    <group ns="test_ns">
+        <param name="movingmotor_flag" type="int" value="1" />
+        <param name="liftmotor_flag" type="int" value="1" />
+      </group>
+</launch>

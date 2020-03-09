@@ -68,18 +68,29 @@ d6 = 0.094;
 """
 class Aubo_kinematics():
     def __init__(self):
-        self.a2 =  0.408
-        self.a3 =  0.376
-        self.d1 =  0.122
-        self.d2 =  0.1215
-        self.d5 =  0.1025
-        self.d6 =  0.094
+        # self.a2 =  0.408
+        # self.a3 =  0.376
+        # self.d1 =  0.122
+        # self.d2 =  0.1215
+        # self.d5 =  0.1025
+        # self.d6 =  0.094
+        self.a2 = 0.647
+        self.a3 = 0.6005
+        self.d1 = 0.1632
+        self.d2 = 0.2013
+        self.d5 = 0.1025
+        self.d6 = 0.094
         self.ZERO_THRESH = 1e-4
         self.ARM_DOF=6
     def degree_to_rad(self,q):
         temp=[]
         for i in range(len(q)):
             temp.append(q[i]*pi/180)
+        return temp
+    def rad_to_degree(self,q):
+        temp=[]
+        for i in range(len(q)):
+            temp.append(q[i]*180/pi)
         return temp
     def antiSinCos(self,sA,cA):
     
@@ -346,7 +357,7 @@ class Aubo_kinematics():
         valid = True
         for i in range(N):
         
-            valid = True;
+            valid = True
             for j in range(self.ARM_DOF):
             #drop greater than offical degree
                 if(q_sols[i][j] > AngleLimit[j][1] or q_sols[i][j] < AngleLimit[j][0]):
@@ -367,7 +378,7 @@ class Aubo_kinematics():
                     q_sols_selected.update({num:q_sols[i]})
                     num+=1
 
-        num_sols = num;
+        num_sols = num
 
         if(num > 0):
             return True,q_sols_selected
@@ -417,9 +428,50 @@ class Aubo_kinematics():
     
 def main():
     ak47=Aubo_kinematics()
+
     # print ak47.aubo_forward([-3.3364,12.406,-81.09,-91.207,-86.08,0.164])
-    # print numpy.matrix(ak47.aubo_forward([-3.3364,12.406,-81.09,-91.207,-86.08,0.164])).reshape((4,4))
-    tt=[0.010016939985065143, -0.039901099098502056, -0.9991534232559417, -0.3, -0.999934201568705, 0.005186605233011846, -0.010231894219208601, -0.09507448660946277, 0.005590478198847001, 0.999190172798396, -0.039846519755429126, 0.5962177031402299, 0, 0, 0, 1]
+    tt2=[28.87,-31.9,71.21,99.6,63.5,9.6]
+    tt1=[11.69,36.12,132.25,76.75,81.62,4.8]#camera cupature
+    print numpy.matrix(ak47.aubo_forward(tt2)).reshape((4,4))
+    bTc=[0.46321,-0.06409,0.88393,0.2437,
+    -0.88599,-0.00907,0.46362,-0.085,
+    -0.0217,-0.9979,-0.06098,0.829,
+    0,0,0,1]
+    p3=[0.0975,-0.0054,1.011,1]
+    p1=[0.11965,-0.11615,1.003,1]
+    print numpy.matrix(p3).reshape((4,1)).T
+
+    bT3=numpy.dot(numpy.matrix(bTc).reshape((4,4)),numpy.matrix(p3).reshape((4,1)))
+    print bT3
+    bT1=numpy.dot(numpy.matrix(bTc).reshape((4,4)),numpy.matrix(p1).reshape((4,1)))
+    print bT1
+    # print (-0.0217*0.0975)+(-0.9979)*(-0.0054)+(-0.06098)*(1.011)+0.0829*1
+    cTx=[1,0,0,0,0,0,1,0,0,-1,0,0,0,0,0,1]
+    xTy=[0,0,1,0,0,1,0,0,-1,0,0,0,0,0,0,1]
+    cTxdotxTy=numpy.dot(numpy.matrix(cTx).reshape((4,4)),numpy.matrix(xTy).reshape((4,4)))
+    bTccTxdotxTy=numpy.dot(numpy.matrix(bTc).reshape((4,4)),cTxdotxTy)
+    # print bTccTxdotxTy
+    print numpy.matrix(bTc).reshape((4,4))
+    print numpy.dot(numpy.matrix(ak47.aubo_forward(tt1)).reshape((4,4)).I,bTccTxdotxTy)
+
+    eTc=numpy.dot(numpy.matrix(ak47.aubo_forward(tt1)).reshape((4,4)).I,bTccTxdotxTy)
+
+    bTcp=[-0.03255502,  0.05988157 , 0.99767448,1.183,0.98968382, -0.13741285 , 0.04054195,0.297,0.13952101 , 0.98870213, -0.05479034,0.771,0,0,0,1]
+    b1Tcp=[-0.03255502,  0.05988157 , 0.99767448,1.193,0.98968382, -0.13741285 , 0.04054195,0.275,0.13952101 , 0.98870213, -0.05479034,0.881,0,0,0,1]
+    eTcp=numpy.dot(numpy.matrix(ak47.aubo_forward(tt2)).reshape((4,4)).I,numpy.matrix(bTcp).reshape((4,4)))
+    print eTcp
+    b1Te=numpy.dot(numpy.matrix(b1Tcp).reshape((4,4)),numpy.matrix(eTcp).reshape((4,4)).I)
+    print "b1Te",b1Te
+    b1Te1=[-0.03255502 , 0.05988157,  0.99767448,  1.01803903,0.98968382, -0.13741285 , 0.04054195 , 0.2560152,0.13952101 , 0.98870213 ,-0.05479034,  0.78343593,0,0,0,1]
+    # q_dict,num=ak47.aubo_inverse(b1Te1)
+    # print ak47.GetInverseResult(bTe,ak47.degree_to_rad(tt1))
+    print ak47.rad_to_degree(ak47.GetInverseResult(b1Te1,ak47.degree_to_rad(tt1)))
+    # tt2=[28.49,-31.93,71.21,99.60,63.57,9.6]
+    # print numpy.matrix(ak47.aubo_forward(tt2)).reshape((4,4))
+    # ttr=[-0.02712843,  0.05962721,  0.99785202,0.9898712,  -0.137553,    0.03513101,0.1393523,   0.98869802, -0.05529166]
+    # print numpy.matrix(ttr).reshape((3,3)).T
+    # eTc
+    #tt=[0.010016939985065143, -0.039901099098502056, -0.9991534232559417, -0.3, -0.999934201568705, 0.005186605233011846, -0.010231894219208601, -0.09507448660946277, 0.005590478198847001, 0.999190172798396, -0.039846519755429126, 0.5962177031402299, 0, 0, 0, 1]
     # tt=[1.0, 0.0, 0.0, -0.4, 0.0, -1.0, -0.0, -0.8500000000000001, 0.0, 0.0, -1.0, -0.4, 0.0, 0.0, 0.0, 1.0]
     # tt=[1.0, 0.0, 0.0, -0.4, 0.0, -1.0, -0.0, -0.4500000000000001, 0.0, 0.0, -1.0, -0.4, 0.0, 0.0, 0.0, 1.0]
     # q_dict,num=ak47.aubo_inverse(tt)
@@ -427,6 +479,6 @@ def main():
     # for i in range(len(q_dict)):
     #     print i,q_dict[i]
     # print ak47.degree_to_rad([-3.3364,12.406,-81.09,-91.207,-86.08,0.164])
-    print ak47.GetInverseResult(tt,ak47.degree_to_rad([-3.3364,12.406,-81.09,-91.207,-86.08,0.164]))
+    # print ak47.GetInverseResult(tt,ak47.degree_to_rad([-3.3364,12.406,-81.09,-91.207,-86.08,0.164]))
 if __name__=="__main__":
     main()

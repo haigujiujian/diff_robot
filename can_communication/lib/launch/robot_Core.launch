@@ -1,0 +1,7 @@
+<launch>
+      <node pkg="can_communication" type="can_communication1" name="can_communication1" output="screen"/>
+      <group ns="communication_ns">
+        <param name="movingmotor_flag" type="int" value="1" />
+        <param name="liftmotor_flag" type="int" value="1" />
+      </group>
+</launch>
