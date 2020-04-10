@@ -8,13 +8,15 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
+#include <sensor_msgs/JointState.h>
 #include <js_turtle/lift_control_msg.h> 
 #include"can_communication/motor_control.h"
     Motor_Control motor_Ctr;
 
-#define		PI			3.1415926535897932f
-#define   R       0.25
-#define   r_to_m_Switch  9000.0
+
+#define   L       0.498  //轮间距
+#define   R       0.249
+#define   r_to_m_Switch  9000.0    //(pi*d轮子直径)/(reduce_num*60)s  转每分转换成m每秒
 #define   extreme_low  1038500000.0
 #define   extreme_high 1100000000.0
 #define   length       0.465
@@ -85,9 +87,10 @@ union odometry													//里程计数据共用体
 void readData()
 {
   motor_Ctr.Motor_Feedback();
+
   ros::Time curr_time;
-  vx= (motor_Ctr.left_realtime_Speed+motor_Ctr.right_realtime_Speed)*PI/(2*r_to_m_Switch);
-  vth=((motor_Ctr.right_realtime_Speed-motor_Ctr.left_realtime_Speed)*PI/r_to_m_Switch)/(2*R);
+  vx= (motor_Ctr.left_realtime_Speed+motor_Ctr.right_realtime_Speed)*PI/(r_to_m_Switch*2);
+  vth=((motor_Ctr.right_realtime_Speed-motor_Ctr.left_realtime_Speed)*PI)/(L*r_to_m_Switch);
   curr_time = ros::Time::now();
 
   double dt = (curr_time - last_time).toSec();
@@ -146,21 +149,21 @@ void write_lift_Speed(const js_turtle::lift_control_msg& msg)
   {
            
            ros::init(argc, argv, "can_communication1");									//初始化节点
-	       ros::Time::init();
-		   current_time = ros::Time::now();
-		   last_time = ros::Time::now();
-		   ros::Rate loop_rate(20);
-	       ros::NodeHandle nh;
+           ros::Time::init();
+           current_time = ros::Time::now();
+           last_time = ros::Time::now();
+           ros::Rate loop_rate(20);
+           ros::NodeHandle nh;
            ros::NodeHandle privatenh("test_ns");
          
          
 
            ros::Publisher pub = nh.advertise<nav_msgs::Odometry>("odom", 50); 
+           ros::Publisher pub1=nh.advertise<sensor_msgs::JointState>("odom_msg",50);
            tf::TransformBroadcaster odom_broadcaster;
-          
+           sensor_msgs::JointState odom_msg;
            ros::Subscriber sub1 = nh.subscribe("cmd_vel", 50, &writeSpeed);
            ros::Subscriber sub2 = nh.subscribe("lift_msg", 50,&write_lift_Speed);
-           
            geometry_msgs::TransformStamped odom_trans;
            motor_Ctr.Motor_PDO_Open();
            motor_Ctr.Motor_Speed_Control(left_Wheel.Motor_ID, 0, left_Wheel.Work_Mode,left_Wheel.Control_Word);
@@ -172,6 +175,23 @@ void write_lift_Speed(const js_turtle::lift_control_msg& msg)
            while(ros::ok())
            {
                 readData();
+                current_time = ros::Time::now();
+                odom_msg.header.stamp=current_time;
+                odom_msg.name.resize(2);
+                odom_msg.position.resize(2);
+                odom_msg.name[0]="left_dis";
+                odom_msg.position[0]=motor_Ctr.left_dis;
+                odom_msg.velocity[0]=motor_Ctr.left_realtime_Speed;
+                odom_msg.name[1]="right_dis";
+                odom_msg.position[1]=motor_Ctr.right_dis;
+                odom_msg.velocity[1]=motor_Ctr.right_realtime_Speed;
+                odom_msg.name[2]="left_dis_r";
+                odom_msg.position[2]=motor_Ctr.left_dis_value;
+                odom_msg.name[3]="rigth_dis_r";
+                odom_msg.position[3]=motor_Ctr.right_dis_value;
+                pub1.publish(odom_msg);
+
+
                 current_time = ros::Time::now();
                 odom_trans.header.stamp = current_time;
                 odom_trans.header.frame_id = "odom";
@@ -203,7 +223,7 @@ void write_lift_Speed(const js_turtle::lift_control_msg& msg)
                 msgl.twist.twist.angular.z = vth;
                 msgl.twist.covariance=odom_twist_covariance;
    
-                pub.publish(msgl);   
+                //pub.publish(msgl);   
                 ros::spinOnce();
                 loop_rate.sleep();
            }

@@ -5,6 +5,7 @@
 
   CANcommunication CAN_com1;
   BYTE Control_Word_Stop[2]={0x06,0x00} ;
+  
   union Control_value
   {
 	  BYTE modify_value[4];
@@ -129,7 +130,12 @@ bool Motor_Control::Motor_Feedback()
 				speed_change.real_time_speed[1]=CAN_com1.vci[i].Data[1];
                 speed_change.real_time_speed[2]=CAN_com1.vci[i].Data[2];
 				speed_change.real_time_speed[3]=CAN_com1.vci[i].Data[3];
-
+                dis_wheel.dis[0]=CAN_com1.vci[i].Data[4];
+				dis_wheel.dis[1]=CAN_com1.vci[i].Data[5];
+				dis_wheel.dis[2]=CAN_com1.vci[i].Data[6];
+				dis_wheel.dis[3]=CAN_com1.vci[i].Data[7];
+				left_dis_value=dis_wheel.dis_moved/encoder_num;
+				left_dis=(dis_wheel.dis_moved*2*PI*wheel_r)/encoder_num;
 				/*for(i=0;i<4;i++)
 				{
 					std::cout<<std::to_string(speed_change.real_time_speed[i])<<std::endl;
@@ -149,6 +155,12 @@ bool Motor_Control::Motor_Feedback()
 				speed_change.real_time_speed[1]=CAN_com1.vci[i].Data[1];
                 speed_change.real_time_speed[2]=CAN_com1.vci[i].Data[2];
 				speed_change.real_time_speed[3]=CAN_com1.vci[i].Data[3];
+				dis_wheel.dis[0]=CAN_com1.vci[i].Data[4];
+				dis_wheel.dis[1]=CAN_com1.vci[i].Data[5];
+				dis_wheel.dis[2]=CAN_com1.vci[i].Data[6];
+				dis_wheel.dis[3]=CAN_com1.vci[i].Data[7];
+				right_dis_value=dis_wheel.dis_moved/encoder_num;
+                right_dis=(dis_wheel.dis_moved*2*PI*wheel_r)/encoder_num;
 				/*for(i=0;i<4;i++)
 				{
 					std::cout<<std::to_string(speed_change.real_time_speed[i])<<std::endl;

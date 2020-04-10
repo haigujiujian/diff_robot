@@ -3,13 +3,18 @@
 
 #include"can_communication/controlcan.h"
 #define INT16 unsigned int
-
-
+#define wheel_r 0.09
+#define	PI	 3.1415926535897932f
   union hex2int
 {
 	int real_speed;
     unsigned char real_time_speed[4];
 	
+};
+union hex2int_dis
+{
+	int dis_moved;
+	unsigned char dis[4];
 };
 
 
@@ -29,8 +34,13 @@ public:
 
 	//int ByteHex2Int(BYTE *data_vec, const int &data_vec_len);
 	double left_realtime_Speed;
+	double left_dis;
+	double left_dis_value;
     double right_realtime_Speed;
+	double right_dis;
+	double right_dis_value;
     hex2int speed_change;
+	hex2int_dis dis_wheel;
 private:
 	int MotorID_Num1=0x201;
 	int MotorID_Num2=0x202;

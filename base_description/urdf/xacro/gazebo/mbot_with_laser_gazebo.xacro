@@ -4,14 +4,18 @@
     <xacro:include filename="$(find base_description)/urdf/xacro/mbot_base.xacro" />
     <xacro:include filename="$(find base_description)/urdf/xacro/sensors/lidar_gazebo.xacro" />
     <xacro:include filename="$(find base_description)/urdf/xacro/sensors/imu_gazebo.xacro" />
+    <!--xacro:include filename="$(find base_description)/urdf/xacro/actuator/aubo_i10.xacro" /-->
     <xacro:property name="lidar_offset_x" value="0.25" />
     <xacro:property name="lidar_offset_y" value="0" />
-    <xacro:property name="lidar_offset_z" value="0.125" />
+    <xacro:property name="lidar_offset_z" value="0.1" />
     <xacro:property name="imu_offset_x" value="0" />
     <xacro:property name="imu_offset_y" value="0" />
     <xacro:property name="imu_offset_z" value="0.125" />
+    <!--xacro:property name="pedestal_offset_x" value="0" />
+    <xacro:property name="pedestal_offset_y" value="0" />
+    <xacro:property name="pedestal_offset_z" value="0.125"/-->
     <mbot_base/>
-
+    <aubo_i10/>
     <!-- lidar -->
     <joint name="lidar_joint" type="fixed">
         <origin xyz="${lidar_offset_x} 
@@ -30,6 +34,16 @@
     </joint>
 
     <xacro:imu prefix="imu"/>
+    <!--aubo_i10 -->
+    <!--joint name="pedestal_joint" type="fixed">
+        <origin xyz="${pedestal_offset_x} 
+        ${pedestal_offset_y} ${pedestal_offset_z}" rpy="0 0 0" />
+        <parent link="lift2_link"/>
+        <child link="pedestal_link"/>
+    </joint-->
+
+
     <mbot_base_gazebo/>
+    <aubo_i10_gazebo/>
 
 </robot>

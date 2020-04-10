@@ -29,6 +29,7 @@
     <xacro:property name="lift2_lower" value="0.0"/>
     <xacro:property name="lift2_v" value="0.1"/>
     <xacro:property name="lift2_effort" value="1000"/>
+    
     <!-- Macro for inertia matrix -->
     <xacro:macro name="sphere_inertial_matrix" params="m r">
         <inertial>
@@ -229,7 +230,7 @@
                 </geometry>
             </collision>
             <inertial>
-                <mass value="60"/>
+                <mass value="120"/>
                 <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
             </inertial>
         </link>
